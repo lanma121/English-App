@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CORS</title>
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js"
+        integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+    <script>
+        function api() {
+            fetch('http://localhost:3005/translate/', { mode: "no-cors", method: "POST", body: JSON.stringify({aaa: 'hhhhhhhhhhhhh'}), })
+                .then(async (response) => {
+                    console.log('===fetch success', response.json());
+
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        }
+        // api();
+        // Receiver
+        function message() {
+            window.addEventListener('message', event => {
+            // Verify the sender's origin to prevent attacks
+            // if (event.origin === 'https://example.com') {
+                console.log('Message received from iframe:', event);
+                
+                // Reply back to the sender if necessary
+                // event.source.postMessage('Hello from the iframe!', event.origin);
+            // }
+            });
+
+        }
+
+        function turnQuery() {
+            window.queryInterval = setInterval(() => {
+                document.querySelector('#contents').textContent = localStorage.getItem('google_translate');
+            }, 900);
+        }
+
+        const createEelement = (name, attributes = {}, DOC = document) => {
+            const el = DOC.createElement(name);
+            Object.keys(attributes).forEach((key) => {
+                el.setAttribute(key, attributes[key]);
+            });
+            return el;
+        }
+
+
+        const translateContent = (content) => {
+            const container = document.querySelector('#contents');
+            const spans = container.querySelectorAll('span');
+            const span = createEelement('span', {style: 'color: red;'});
+            span.textContent = content;
+            spans.item(spans.length - 1)?.removeAttribute('style');
+            container.append(span);
+            // const scrollContainer = document.getElementById('body');
+
+            // // 滚动容器始终滚动到最底部
+            // scrollContainer.scrollTop = container.scrollHeight;
+
+            // 或者可以使用 scrollIntoView() 方法
+            container.lastElementChild.scrollIntoView();
+        }
+        
+        const websocket = (url) => {
+            // 创建一个WebSocket对象，指定服务器的URL
+            const socket = new WebSocket(url);
+        
+            // 当连接建立时触发
+            socket.onopen = function(event) {
+                console.log('WebSocket连接已建立');
+                
+                // 向服务器发送消息
+                // socket.send('Hello, server!');
+            };
+        
+            // 当接收到消息时触发
+            socket.onmessage = function(event) {
+                // console.log('接收到服务器消息:', event.data);
+                translateContent(event.data);
+            };
+        
+            // 当连接关闭时触发
+            socket.onclose = function(event) {
+                console.log('WebSocket连接已关闭');
+            };
+        
+            // 当连接发生错误时触发
+            socket.onerror = function(error) {
+                console.error('WebSocket连接错误:', error);
+            };
+        
+        }
+
+        websocket('ws:localhost:3006');
+    
+    </script>
+</head>
+
+<body>
+    <div id="google_translate_element" style="position: absolute;display: none;"></div>
+    <p id="contents"></p>
+    <script type="text/javascript">
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en', // 设置页面语言
+                // includedLanguages: 'zh-CN', // 设置支持的目标语言，这里是简体中文
+                // layout: google.translate.TranslateElement.InlineLayout.SIMPLE // 设置布局样式 
+            }, 'google_translate_element');
+            document.querySelector('.goog-te-combo').value = 'zh-CN';
+            document.querySelector('.goog-te-combo').dispatchEvent(new Event("change"));
+        }
+    </script>
+
+    <script type="text/javascript"
+        src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+
+</html>
