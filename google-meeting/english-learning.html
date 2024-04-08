@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>English Learning</title>
+    <script>
+        (function () {
+            let translator = 'local';
+            const translatorConfig = {
+                local: (word) => `http://localhost:3005/dictionary?word=${word}`,
+                googlet: () => {
+                    return {
+                        // https://translate.googleapis.com/translate_a/t?anno=3&client=te&format=html&v=1.0&key&logld=vTE_20240320&sl=en&tl=zh-CN&tc=0&tk=572971.1048196
+                        url: 'https://translate.google.com/_/TranslateWebserverUi/data/batchexecute?rpcids=AVdN8&source-path=%2F&f.sid=-531554306794997781&bl=boq_translate-webserver_20240312.05_p0&hl=en&soc-app=1&soc-platform=1&soc-device=1&_reqid=379387&rt=c',
+                    }
+                },//https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q=Hello
+                google: (value) => `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=zh-CN&dt=t&q=${encodeURI(value,)
+                    }`,
+                bing: {
+                    url: 'https://www.bing.com/ttranslatev3?&IG=E2680977B73848FA8BC5252FFEBF9700&IID=SERP.5626',
+                    data: {
+                        fromLang: 'en',
+                        to: 'zh-Hans',
+                        token: 'XtZFvL8c9N2oHiFYwKR9e_ymeayhNp16',
+                        key: '1710859737886',
+                        text: 'hi everyone',
+                        tryFetchingGenderDebiasedTranslations: true
+                    }
+                }
+            }
+            const websocket = (url) => {
+                // 创建一个WebSocket对象，指定服务器的URL
+                const socket = new WebSocket(url);
+
+                // 当连接建立时触发
+                socket.onopen = function (event) {
+                    console.log('WebSocket连接已建立');
+
+                    // 向服务器发送消息
+                    // socket.send('Hello, server!');
+                };
+
+                // 当接收到消息时触发
+                socket.onmessage = function (event) {
+                    // console.log('接收到服务器消息:', event.data);
+                };
+
+                // 当连接关闭时触发
+                socket.onclose = function (event) {
+                    console.log('WebSocket连接已关闭');
+                };
+
+                // 当连接发生错误时触发
+                socket.onerror = function (error) {
+                    console.error('WebSocket连接错误:', error);
+                };
+            }
+            const request = (url, { data = undefined, ...option } = {}) => {
+                console.log(url);
+                try {
+                    const controller = new AbortController();
+                    const result = new Promise(async (resolve, reject) => {
+                        const datas = data ? { data: JSON.stringify(data) } : {};
+                        const response = await fetch(url, {
+                            signal: controller.signal,
+                            method: data ? "POST" : "GET", // *GET, POST, PUT, DELETE, etc.
+                            // mode: "cors", // no-cors, *cors, same-origin
+                            // cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+                            // credentials: "same-origin", // include, *same-origin, omit
+                            headers: {
+                                //   "Content-Type": "application/json",
+                                //   'Content-Type': 'application/x-www-form-urlencoded',
+                                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+                            },
+                            ...option,
+                            ...datas,
+                            // redirect: "follow", // manual, *follow, error
+                            // referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+                        });
+                        if (!response.ok) {
+                            throw new Error("Network response was not OK");
+                        }
+                        resolve(response.json());
+                    });
+                    result.controller = controller;
+                    return result;
+                } catch (error) {
+                    console.error(error)
+                }
+            }
+
+            const bindEvent = (selector, events, callback, options = {}) => {
+                if (!selector || !events || !callback) {
+                    console.error('bind event error');
+                }
+                const controller = new AbortController();
+                setTimeout(() => {
+                    const dom = typeof selector === 'string' ? document.querySelector(selector) : selector;
+                    dom.removeEventListener(events, callback, { signal: controller.signal, ...options });
+                    dom.addEventListener(events, callback, { signal: controller.signal, ...options });
+                }, 500);
+                return controller;
+            }
+
+            const createEelement = (name, attributes = {}, DOC = document) => {
+                const el = DOC.createElement(name);
+                Object.keys(attributes).forEach((key) => {
+                    if (key === 'text') {
+                        // el.textContent = attributes[key];
+                        el.insertAdjacentText('beforeend', attributes[key] || '');
+                        return;
+                    }
+                    el.setAttribute(key, attributes[key]);
+                });
+                el.appends = (...params) => {
+                    el.append(...[].concat(...params));
+                    return el;
+                }
+                return el;
+            }
+
+            const changeAnchorNode = (node, position) => {
+                const sel = window.getSelection();
+                const range = document.createRange();
+                range.setStart(node, position);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+
+            const toggleTranslation = (target) => {
+                document.querySelectorAll('#translation > div').forEach((child) => {
+                    child.style.display = 'none';
+                });
+                target.style.display = 'block';
+            }
+
+            const displayResult = (result = []) => {
+                const word = result[0].word;
+                const div = createEelement('div', { id: word });
+                
+                const resEle = result.map((item) => {
+                    const block = createEelement('div');
+                    const p = createEelement('p', {class: 'phonetics'}).appends(
+                        createEelement('a', {href: item.sourceUrls[0], text: item.word}),
+                        item.phonetics.map(({text, audio}) => {
+                            let audioPlay = '';
+                            if (audio) {
+                                audioPlay = createEelement('a', {
+                                    class: 'audio-icon',
+                                    text: audio.match(/.*-(.*).mp3/)[1]
+                                });
+                                bindEvent(audioPlay, 'click', (e) => {
+                                    e.preventDefault();
+                                    e.target.parentNode.querySelector('audio').play();
+                                });
+                            }
+                            return createEelement('span').appends(
+                                createEelement('span', { text }),
+                                createEelement('audio', { src: audio }),
+                                audioPlay
+                            )
+                        })
+                    );
+                    const meanings = item.meanings.map(({partOfSpeech, definitions}) => 
+                        createEelement('p', {class: 'meaning'}).appends(
+                            createEelement('h4', { text: partOfSpeech }),
+                            definitions.map(({ definition, example}) => 
+                                createEelement('p').appends(
+                                    createEelement('div', {text: `definition: ${definition}`}), 
+                                    example ? createEelement('div', {text: `example: ${example}`,}) : ''
+                                )
+                            )
+                        )
+                    );
+                    
+                    return block.appends(p, meanings);
+                })
+                div.appends(resEle);
+                toggleTranslation(div);
+                document.querySelector('#translation').append(div);
+               
+            }
+
+            const wordInsertA = (container) => {
+                const a = createEelement('a');
+                a.style.opacity = 0;
+                a.textContent = "_";
+                container.append(a);
+                changeAnchorNode(a, 1);
+                bindEvent(a, 'click', async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const value = e.target.textContent.trim();
+                    if (!value) return;
+                    const targetEle = document.querySelector('#'+value);
+                    if(targetEle) {
+                        toggleTranslation(targetEle);
+                        return;
+                    }
+                    const result = await request(translatorConfig[translator](value));
+                    displayResult(result);
+                });
+            }
+
+            bindEvent('#content', 'keydown', (e) => {
+                console.log(e.key, '******', e);
+                if (e.key.length > 1 || e.metaKey) {return;}
+                if (e.key === ' ' || !e.target.textContent) {
+                    // const last = document.querySelector('#content').lastChild;
+                    // const text = last.textContent.trim();
+                    wordInsertA(e.target);
+
+                }
+                if (e.key !== ' ') {
+                    setTimeout(() => {
+                        const currentTarget = window.getSelection().anchorNode?.parentNode;
+                        if (currentTarget?.textContent.startsWith('_')) {
+                            currentTarget.textContent = currentTarget.textContent.slice(1);
+                            currentTarget.style.opacity = 1;
+                            window.getSelection().getRangeAt(0).setStart(currentTarget, 1);
+                        }
+                    }, 0);
+
+                }
+            });
+
+            bindEvent('#content', 'paste', (e) => {
+                // Stop data actually being pasted into div
+                e.stopPropagation();
+                e.preventDefault();
+                let currentTarget = window.getSelection().anchorNode?.parentNode;
+                if (currentTarget.nodeName !== 'a') {
+                    const aelems =  e.target.querySelectorAll('a');
+                    currentTarget = aelems[aelems.length - 1] || e.target;
+                }
+                // Get pasted data via clipboard API
+                const clipboardData = e.clipboardData || window.clipboardData;
+                const pastedData = clipboardData.getData('Text') || '';
+                pastedData.split(' ').forEach((word) => {
+                    const aTag = createEelement('a', {text: ' ' + word});
+                    currentTarget.insertAdjacentElement(currentTarget === e.target ? 'beforeend' : 'afterend', aTag);
+                    currentTarget = aTag;
+                });
+            });
+
+
+        })()
+    </script>
+    <style>
+        h4, p {
+            margin: 10px 0;
+        }
+        #container {
+            display: flex;
+        }
+
+        #container>div {
+            border: 1px solid burlywood;
+            min-height: 200px;
+            flex-grow: 1;
+        }
+
+        #container #translation,
+        #container #content {
+            padding: 20px;
+            min-height: 100%;
+            box-sizing: border-box;
+        }
+
+        #content a:hover {
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        #translation > div {
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        #translation .phonetics > span {
+            margin-left: 15px;
+        }
+
+        #translation .phonetics .audio-icon {
+            width: 40px;
+            height: 20px;
+            background-repeat: no-repeat;
+            display: inline-block;
+            margin: 0 10px;
+            cursor: pointer;
+            text-align: right;
+            background-position: left center;
+            background-image: url('data:image/svg+xml,<svg style="" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" height="14px"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M533.6 32.5C598.5 85.2 640 165.8 640 256s-41.5 170.7-106.4 223.5c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C557.5 398.2 592 331.2 592 256s-34.5-142.2-88.7-186.3c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zM473.1 107c43.2 35.2 70.9 88.9 70.9 149s-27.7 113.8-70.9 149c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C475.3 341.3 496 301.1 496 256s-20.7-85.3-53.2-111.8c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zm-60.5 74.5C434.1 199.1 448 225.9 448 256s-13.9 56.9-35.4 74.5c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C393.1 284.4 400 271 400 256s-6.9-28.4-17.7-37.3c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zM301.1 34.8C312.6 40 320 51.4 320 64V448c0 12.6-7.4 24-18.9 29.2s-25 3.1-34.4-5.3L131.8 352H64c-35.3 0-64-28.7-64-64V224c0-35.3 28.7-64 64-64h67.8L266.7 40.1c9.4-8.4 22.9-10.4 34.4-5.3z"></path></svg>');
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container" style="display: flex;">
+        <div>
+            <div id="content" contenteditable="true" spellcheck="true"></div>
+        </div>
+        <div>
+            <div id="translation"></div>
+        </div>
+    </div>
+    <button id="speechRecognition"> Click Me</button>
+    <script type="module">
+    import { createSpeechRecognition } from './speech-web.mjs';
+        console.log(window, '======');
+      document.querySelector('#speechRecognition').onclick = () => {
+        console.log('-----start-----');
+        const recognition = createSpeechRecognition();
+        recognition.onresult = (event) => {
+            console.log('====-==-=', event.results);
+            const color = event.results;//[0][0].transcript;
+            // diagnostic.textContent = `Result received: ${color}`;
+            // bg.style.backgroundColor = color;
+        };
+      };
+    </script>
+</body>
+
+</html>

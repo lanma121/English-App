@@ -129,9 +129,41 @@
         return el;
     }
 
+    const addStyle = () => {
+        document.querySelector('#myStyle')?.remove();
+        const style = createEelement('style', {id: 'myStyle', type: "text/css"});
+        style.appendChild(document.createTextNode(`
+            .a4cQT {
+                height: 0 !important;
+                width: 0 !important;
+                overflow: hidden  !important;
+            }
+            .Mz6pEf {
+                padding: 0 !important;
+            }
+            .iTTPOb {
+                left: 0 !important;
+            }
+            .a4cQT .iOzk7 {
+                position: fixed !important;
+                left: calc(100% - 400px);
+                z-index: 9 !important;
+                top: 0px;
+                background: black !important;
+                width: 400px !important;
+                height: 600px !important;
+                padding: 0px !important;
+                overflow: hidden !important;
+                resize: both !important;
+            }
+        `));
+        document.querySelector('head').append(style);
+    }
+
     function init() {
         clearInterval(window.myinterval);
         // const date = new Date().toDateString().replace(' ', '_');
+        addStyle();
         document.querySelector('body #myTranslator')?.remove();
         document.querySelector('body')?.append(createContainer());
         localStorage.removeItem('ATS');
@@ -155,6 +187,7 @@
                 return false;
             }
         });
+        
         window.myinterval = setInterval(() => {
             let contents = '';
             const speakers = document.querySelectorAll('.iOzk7 > div.TBMuR');
@@ -169,6 +202,15 @@
                 }
             }
             if (!contents) return;
+            if (!document.querySelector('body .a4cQT .iOzk7').getAttribute('draggable')) {
+                bindEvent('body .a4cQT .iOzk7', 'dragend', (e) => {
+                    e.target.style.left = e.pageX + 'px';
+                    e.target.style.top = e.pageY + 'px';
+                    console.log('---------------------');
+                });
+                document.querySelector('body .a4cQT .iOzk7').setAttribute('draggable', true);
+            }
+            
             document.querySelector('#inputLanguage').value = contents;
             document.querySelector('#inputLanguage').dispatchEvent(new Event("change"));
             const lastContent = localStorage.getItem('ATS_last') || '';
