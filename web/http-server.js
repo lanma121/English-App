@@ -1,5 +1,5 @@
 const http = require('http');
-const { existsSync, promises : fs }  = require('fs');
+const { promises : fsAsync, ...fs }  = require('fs');
 const { websockt } = require('./web-socket');
 const GoogleDic = require('./google-dictionary');
 
@@ -8,14 +8,31 @@ const port = 3005;
 
 const caches = {};
 const paths = {
-  english: '/Users/tliu1/workspace/English-Learning/google-meeting/english-learning.html',
+  english: '/Users/tliu1/workspace/English-Learning/web/english-learning.html',
   index: '/Users/tliu1/gethired/code/TM-FED/google-translate.html'
+}
+
+const getFileStat = async(path) => {
+  try {
+    return fsAsync.stat(path);
+  } catch (error) {
+    throw(error);
+  }
+}
+
+const getPath = (path) => {
+  path = paths[path] || path;
+  // root path
+  if (path.startsWith('/')) {
+    return path;
+  }
+  return `${__dirname}/${path}`;
 }
 
 const getFile = async(key, cache, option) => {
   try {
-    const path = paths[key] || `${__dirname}/${key}`;
-    const content = await existsSync(path) ? fs.readFile(path, option) : 'path is not config';
+    const path = getPath(key);
+    const content = await fs.existsSync(path) ? fsAsync.readFile(path, option) : 'path is not config';
     if (cache) {
       caches[key.replace(/[ \/\.]/g, '_')] = content;
     }
@@ -35,10 +52,41 @@ const wsSend = async (data) => {
   return {};
 }
 
+const handleMedia = async (req, res) => {
+  const path = getPath(req.url);
+  const stat = await getFileStat(path);
+  const MIME =  req.headers['content-type'] || path.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg';
+
+  // Parse the range header
+  const range = req.headers.range;
+  if (range) {
+    const parts = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : stat.size - 1;
+    const chunksize = (end - start) + 1;
+
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${stat.size}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunksize,
+      'Content-Type': MIME,
+    });
+    const readStream = fs.createReadStream(path, { start, end });
+    readStream.pipe(res);
+  } else {
+    res.writeHead(200, {
+      'Content-Length': stat.size,
+      'Content-Type': MIME
+    });
+    const readStream = fs.createReadStream(path);
+    readStream.pipe(res);
+  }
+}
+
 const server = http.createServer((req, res) => {
-  console.log('&&&&&&', req.url);
   res.setHeader('Access-Control-Allow-Origin', "*");
   const [path, search = '' ] = req.url.slice(1).split('?');
+  console.log('&&&&&&', req.url, path, search);
   if (req.method === 'POST') {
     var post = '';
     req.on('data', function(chunk){    
@@ -77,6 +125,11 @@ const server = http.createServer((req, res) => {
        // return handleError.call(res, error);
     })
     return; 
+  }
+  // handle stream media
+  if (path.endsWith('.mp4') || path.endsWith('.mp3')) {
+    handleMedia(req, res);
+    return;
   }
   getFile(path).then((data) => {
     const file = paths[path] || path;

@@ -256,9 +256,14 @@
         }
         #container {
             display: flex;
+            flex-direction: column;
         }
 
-        #container>div {
+        .text-container {
+            display: flex;
+        }
+
+        #container .text-container > div {
             border: 1px solid burlywood;
             min-height: 200px;
             flex-grow: 1;
@@ -301,12 +306,33 @@
 
 <body>
     <div id="container" style="display: flex;">
-        <div>
-            <div id="content" contenteditable="true" spellcheck="true"></div>
+        <div class="text-container">
+            <div>
+                <div id="content" contenteditable="true" spellcheck="true"></div>
+            </div>
+            <div>
+                <div id="translation"></div>
+            </div>
         </div>
-        <div>
-            <div id="translation"></div>
+        <div class="video-container">
+            <div id="video"></div>
+            <video
+            controls
+            preload="metadata"
+            src="/Users/tliu1/Downloads/VID_20240412130322.mp4"
+            poster="https://peach.blender.org/wp-content/uploads/title_anouncement.jpg?x11217"
+            width="620">
+            抱歉，你的浏览器不支持嵌入式视频，不过不用担心，你可以<a
+                href="https://archive.org/details/BigBuckBunny_124"
+                >下载</a
+            >并用你最喜欢的视频播放器观看！
+            </video>
         </div>
+        <script type="module">
+            import { createVideo } from './video.mjs';
+            document.querySelector('#video').append(createVideo('/Users/tliu1/Downloads/VID_20240412130322.mp4'));
+        </script>
+
     </div>
     <button id="speechRecognition"> Click Me</button>
     <script type="module">
