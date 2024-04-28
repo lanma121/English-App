@@ -8,8 +8,8 @@ const port = 3005;
 
 const caches = {};
 const paths = {
-  english: '/Users/tliu1/workspace/English-Learning/web/english-learning.html',
-  index: '/Users/tliu1/gethired/code/TM-FED/google-translate.html'
+  english: `${__dirname}/english-learning.html`,
+  index: `${__dirname}/google-translate.html`,
 }
 
 const getFileStat = async(path) => {
@@ -42,10 +42,10 @@ const getFile = async(key, cache, option) => {
   }
 }
 
-let ws;
-(async() => {
-  ws = await websockt();
-})();
+// let ws;
+// (async() => {
+//   ws = await websockt();
+// })();
 
 const wsSend = async (data) => {
   ws.send(data);
