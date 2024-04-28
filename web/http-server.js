@@ -1,6 +1,6 @@
 const http = require('http');
 const { promises : fsAsync, ...fs }  = require('fs');
-const { websockt } = require('./web-socket');
+// const { websockt } = require('./web-socket');
 const GoogleDic = require('./google-dictionary');
 
 const hostname = 'localhost';
@@ -20,10 +20,10 @@ const getFileStat = async(path) => {
   }
 }
 
-const getPath = (path) => {
+const getPath = (path = '') => {
   path = paths[path] || path;
   // root path
-  if (path.startsWith('/')) {
+  if (fs.existsSync(path)) {
     return path;
   }
   return `${__dirname}/${path}`;
@@ -54,6 +54,7 @@ const wsSend = async (data) => {
 
 const handleMedia = async (req, res) => {
   const path = getPath(req.url);
+  console.log();
   const stat = await getFileStat(path);
   const MIME =  req.headers['content-type'] || path.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg';
 
