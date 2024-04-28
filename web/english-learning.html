@@ -316,7 +316,7 @@
         console.log('-----start-----');
         const recognition = createSpeechRecognition();
         recognition.onresult = (event) => {
-            console.log('====-==-=', event.results);
+            console.log('====-==-=', event.results[event.results.length-1][event.results[0].length-1].transcript);
             const color = event.results;//[0][0].transcript;
             // diagnostic.textContent = `Result received: ${color}`;
             // bg.style.backgroundColor = color;
