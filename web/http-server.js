@@ -21,20 +21,38 @@ const getFileStat = async(path) => {
 }
 
 const getPath = (path = '') => {
-  path = paths[path] || path;
-  // root path
   if (fs.existsSync(path)) {
     return path;
   }
-  return `${__dirname}/${path}`;
+  throw new Error(`path is not config, path: ${path}`);
 }
 
-const getFile = async(key, cache, option) => {
+const parseUrl = (url = '') => {
+  const [route, search = '' ] = url.slice(1).split('?');
+  const path = fs.existsSync(url) ? url : (paths[route] || `${__dirname}${url}`);
+  return {
+    url,
+    route,
+    path,
+    params: search.split('&').reduce((param, item) => {
+      if (!item) return param;
+      const [key, value] = item.split('=');
+      param[key] = decodeURIComponent(value);
+      return param;
+    }, {}),
+  }
+}
+
+const getFile = async(path, option, cache) => {
   try {
-    const path = getPath(key);
-    const content = await fs.existsSync(path) ? fsAsync.readFile(path, option) : 'path is not config';
+    path = getPath(path);
+    const key = path.replace(/[ \/\.]/g, '_');
+    if (cache && caches[key]) {
+      return caches[key];
+    }
+    const content = await fsAsync.readFile(path, option);
     if (cache) {
-      caches[key.replace(/[ \/\.]/g, '_')] = content;
+      caches[key] = content;
     }
     return content;
   } catch (error) {
@@ -53,41 +71,46 @@ const wsSend = async (data) => {
 }
 
 const handleMedia = async (req, res) => {
-  const path = getPath(req.url);
-  console.log();
-  const stat = await getFileStat(path);
-  const MIME =  req.headers['content-type'] || path.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg';
+  try {
+    const path = getPath(parseUrl(req.url).path);
+    const stat = await getFileStat(path);
+    const MIME =  req.headers['content-type'] || path.endsWith('.mp4') ? 'video/mp4' : 'audio/mpeg';
 
-  // Parse the range header
-  const range = req.headers.range;
-  if (range) {
-    const parts = range.replace(/bytes=/, '').split('-');
-    const start = parseInt(parts[0], 10);
-    const end = parts[1] ? parseInt(parts[1], 10) : stat.size - 1;
-    const chunksize = (end - start) + 1;
+    // Parse the range header
+    const range = req.headers.range;
+    if (range) {
+      const parts = range.replace(/bytes=/, '').split('-');
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : stat.size - 1;
+      const chunksize = (end - start) + 1;
 
-    res.writeHead(206, {
-      'Content-Range': `bytes ${start}-${end}/${stat.size}`,
-      'Accept-Ranges': 'bytes',
-      'Content-Length': chunksize,
-      'Content-Type': MIME,
-    });
-    const readStream = fs.createReadStream(path, { start, end });
-    readStream.pipe(res);
-  } else {
-    res.writeHead(200, {
-      'Content-Length': stat.size,
-      'Content-Type': MIME
-    });
-    const readStream = fs.createReadStream(path);
-    readStream.pipe(res);
+      res.writeHead(206, {
+        'Content-Range': `bytes ${start}-${end}/${stat.size}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunksize,
+        'Content-Type': MIME,
+      });
+      const readStream = fs.createReadStream(path, { start, end });
+      readStream.pipe(res);
+    } else {
+      res.writeHead(200, {
+        'Content-Length': stat.size,
+        'Content-Type': MIME
+      });
+      const readStream = fs.createReadStream(path);
+      readStream.pipe(res);
+    }
+  } catch (error) {
+    res.writeHead(500);
+    res.end(error.message);
   }
 }
 
 const server = http.createServer((req, res) => {
+  // if (req.url.includes('favicon.ico')) return;
   res.setHeader('Access-Control-Allow-Origin', "*");
-  const [path, search = '' ] = req.url.slice(1).split('?');
-  console.log('&&&&&&', req.url, path, search);
+  const {path, params, route} = parseUrl(req.url);
+  console.log('&&&&&&', req.url, path, route, params);
   if (req.method === 'POST') {
     var post = '';
     req.on('data', function(chunk){    
@@ -97,7 +120,7 @@ const server = http.createServer((req, res) => {
     req.on('end', async() => {
         const data = JSON.parse(post);
         let response = {};
-        if (path === 'translate') {
+        if (route === 'translate') {
           response = await wsSend(data.content);
         }
         res.setHeader("Content-Type", "application/json");
@@ -105,12 +128,7 @@ const server = http.createServer((req, res) => {
     });
     return;
   }
-  const params = search.split('&').reduce((param, item) => {
-    if (!item) return param;
-    const [key, value] = item.split('=');
-    param[key] = decodeURIComponent(value);
-    return param;
-  }, {});
+  
   if (path === 'dictionary') {
     let { word, language = 'en', version = 'google' } = params;
     if (!word) {
@@ -133,7 +151,7 @@ const server = http.createServer((req, res) => {
     return;
   }
   getFile(path).then((data) => {
-    const file = paths[path] || path;
+    const file = path;
     const MIME = req.headers['content-type'] ||
       file.endsWith('.html') ? 'text/html' :
       (file.endsWith('.js') || file.endsWith('.mjs')) ? 'application/javascript' :
@@ -150,7 +168,7 @@ const server = http.createServer((req, res) => {
   }).catch((error) => {
     console.error('get files error:', error);
     res.writeHead(500);
-    res.end(err);
+    res.end(error.message);
   });
 });
 
