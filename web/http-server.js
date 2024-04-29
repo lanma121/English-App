@@ -129,7 +129,7 @@ const server = http.createServer((req, res) => {
     return;
   }
   
-  if (path === 'dictionary') {
+  if (route === 'dictionary') {
     let { word, language = 'en', version = 'google' } = params;
     if (!word) {
       res.end(JSON.stringify({status: 200, msg: 'word is empty'}));

@@ -9,7 +9,7 @@ export const createVideo = (src) => {
         seeked: true,
         startTime: 0,
         endTime: 0,
-        loop: false
+        repeat: 0, // 0: init | end; 1: ready start; 2: repeating
     };
     const video = createEelement('video', {
         src,
@@ -27,9 +27,13 @@ export const createVideo = (src) => {
     }
 
     const repeat = (e) => {
-        // start repeat
-        if (seek.loop) {
-            e.target.style.fill = '#4a8dca';
+        e.preventDefault();
+        e.stopPropagation();
+        const pathElement = e.target.querySelector('path');
+        seek.repeat = seek.repeat === 2 ? 0 : seek.repeat + 1;
+        // repeat inprogress
+        if (seek.repeat === 2) {
+            pathElement.style.fill = '#1c8d1c';
             if (seek.startTime > video.currentTime) {
                 seek.endTime = seek.startTime;
                 seek.startTime = video.currentTime;
@@ -40,10 +44,17 @@ export const createVideo = (src) => {
                 video.currentTime = seek.startTime;
                 play();
             }
+        // ready speat, waiting setup start time and end time
+        } else if (seek.repeat === 1) {
+            pathElement.style.fill = '#d22c0b';
+        }
         // end repeat
-        } else {
+        else {
+            pathElement.style.fill = '#fff';
             seek.seeked = true;
-            e.target.style.fill = '#fff';
+            seek.startTime = 0;
+            seek.endTime = 0;
+            seek.repeat = 0;
         }
     }
 
@@ -55,11 +66,12 @@ export const createVideo = (src) => {
             });
             const eles = [{
                 html: repeatIcon,
-                onclick: (e) => {
-                    e.preventDefault();
-                    seek.loop = !seek.loop;
-                    repeat(e);
-                }
+                onclick: repeat,
+                // (e) => {
+                //     e.preventDefault();
+                //     seek.loop = !seek.loop;
+                //     repeat(e);
+                // }
             }].map((options) => {
                 return createEelement('a', {
                     style: 'cursor: pointer; margin-right: 26px',
@@ -72,7 +84,7 @@ export const createVideo = (src) => {
     });
     
     bindEvent(video, 'seeking', () => {
-        if (seek.seeked && !seek.loop) {
+        if (seek.seeked && seek.repeat === 1) {
             seek.startTime = video.currentTime;
             seek.seeked = false;
             video.pause();
@@ -80,7 +92,7 @@ export const createVideo = (src) => {
     });
 
     bindEvent(video, 'timeupdate', (e) => {
-        if (video.currentTime >= seek.endTime && seek.loop) {
+        if (video.currentTime >= seek.endTime && seek.repeat === 2) {
             video.currentTime = seek.startTime;
             // video.fastSeek(seek.startTime);
             play();
