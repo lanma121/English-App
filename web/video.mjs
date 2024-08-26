@@ -29,7 +29,7 @@ export const createVideo = (src) => {
     const repeat = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const pathElement = e.target.querySelector('path');
+        const pathElement = e.currentTarget.querySelector('path');
         seek.repeat = seek.repeat === 2 ? 0 : seek.repeat + 1;
         // repeat inprogress
         if (seek.repeat === 2) {
@@ -47,6 +47,7 @@ export const createVideo = (src) => {
         // ready speat, waiting setup start time and end time
         } else if (seek.repeat === 1) {
             pathElement.style.fill = '#d22c0b';
+            seek.startTime = video.currentTime;
         }
         // end repeat
         else {
@@ -83,13 +84,14 @@ export const createVideo = (src) => {
         }
     });
     
-    bindEvent(video, 'seeking', () => {
-        if (seek.seeked && seek.repeat === 1) {
-            seek.startTime = video.currentTime;
-            seek.seeked = false;
-            video.pause();
-        }
-    });
+    // bindEvent(video, 'seeking', () => {
+    //     if (seek.seeked && seek.repeat === 1) {
+    //         seek.startTime = video.currentTime;
+    //         seek.seeked = false;
+    //         video.pause();
+    //     }
+    //     console.log('=====seeking', seek);
+    // });
 
     bindEvent(video, 'timeupdate', (e) => {
         if (video.currentTime >= seek.endTime && seek.repeat === 2) {
