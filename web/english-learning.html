@@ -362,8 +362,7 @@
             });
 
             bindEvent('#video_bar #play_video', 'click', (e) => {
-                const file = document.querySelector('#video_bar input[name="video_file"]').value;
-                alert(file+'------');
+                const file = document.querySelector('#video_bar input[name="video_path"]').value;
                 if (file) {
                     document.querySelector('#video').append(createVideo(file));
                 }
