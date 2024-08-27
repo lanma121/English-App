@@ -343,15 +343,27 @@
             <div id="video_bar">
                 <input type="file" name="video_file" />
                 <input type="text" name="video_path" />
+                <button id="play_video">Play Video</button>
             </div>
             <div id="video" style="width: 50%;"></div>
         </div>
         <script type="module">
             import { createVideo } from './video.mjs';
             import { bindEvent } from './utils.mjs';
-            bindEvent('#video_bar input', 'change', (e) => {
-                const file = e.currentTarget.value;
-                alert(file);
+            bindEvent('#video_bar input[name="video_file"]', 'change', (e) => {
+                const videoInput = e.currentTarget;
+                if (videoInput.files.length > 0) {  
+                    const file = videoInput.files[0];  
+                    const videoURL = URL.createObjectURL(file);  
+                    document.querySelector('#video').append(createVideo(videoURL));
+                } else {  
+                    alert('Please select a video file first.');  
+                }  
+            });
+
+            bindEvent('#video_bar #play_video', 'click', (e) => {
+                const file = document.querySelector('#video_bar input[name="video_file"]').value;
+                alert(file+'------');
                 if (file) {
                     document.querySelector('#video').append(createVideo(file));
                 }
