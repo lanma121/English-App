@@ -352,8 +352,10 @@
             bindEvent('#video_bar input', 'change', (e) => {
                 const file = e.currentTarget.value;
                 alert(file);
+                if (file) {
+                    document.querySelector('#video').append(createVideo(file));
+                }
             });
-            document.querySelector('#video').append(createVideo('/Users/tliu1/Documents/Screen_test.mov'));
         </script>
 
     </div>
