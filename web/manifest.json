@@ -16,5 +16,19 @@
             "sizes": "256x256",
             "type": "image/png"
         }
+    ],
+    "screenshots": [
+        {
+        "src": "images/screenshot-wide.png",
+        "sizes": "2558x1440",
+        "type": "image/png",
+        "form_factor": "wide"
+        },
+        {
+            "src": "images/screenshot-mobile.png",
+            "sizes": "846x796",
+            "type": "image/png"
+        }
     ]
+
 }
