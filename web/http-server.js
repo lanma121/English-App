@@ -1,4 +1,5 @@
 const http = require('http');
+const pathp = require('path');
 const { promises : fsAsync, ...fs }  = require('fs');
 // const { websockt } = require('./web-socket');
 const GoogleDic = require('./google-dictionary');
@@ -10,6 +11,7 @@ const caches = {};
 const paths = {
   english: `${__dirname}/english-learning.html`,
   index: `${__dirname}/google-translate.html`,
+  pages: pathp.resolve(`./index.html`),
 }
 
 const getFileStat = async(path) => {
@@ -29,6 +31,7 @@ const getPath = (path = '') => {
 
 const parseUrl = (url = '') => {
   const [route, search = '' ] = url.slice(1).split('?');
+  url = url.replace(/^\/web/, '');
   const path = fs.existsSync(url) ? url : (paths[route] || `${__dirname}${url}`);
   return {
     url,

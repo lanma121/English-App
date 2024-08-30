@@ -1,15 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8">
-  <title>Chrome Editor</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>English Learning</title>
+    <link rel="manifest" href="./web/manifest.json">
+    <script src="./web/web_bundle.js"></script>
+
+    <style>
+        h4, p {
+            margin: 10px 0;
+        }
+        #container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .text-container {
+            display: flex;
+        }
+
+        #container .text-container > div {
+            border: 1px solid burlywood;
+            min-height: 200px;
+            flex-grow: 1;
+        }
+
+        #container #translation,
+        #container #content {
+            padding: 20px;
+            min-height: 100%;
+            box-sizing: border-box;
+        }
+
+        #content a:hover {
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        #translation > div {
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        #translation .phonetics > span {
+            margin-left: 15px;
+        }
+
+        #translation .phonetics .audio-icon {
+            width: 40px;
+            height: 20px;
+            background-repeat: no-repeat;
+            display: inline-block;
+            margin: 0 10px;
+            cursor: pointer;
+            text-align: right;
+            background-position: left center;
+            background-image: url('data:image/svg+xml,<svg style="" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" height="14px"><!--!Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M533.6 32.5C598.5 85.2 640 165.8 640 256s-41.5 170.7-106.4 223.5c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C557.5 398.2 592 331.2 592 256s-34.5-142.2-88.7-186.3c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zM473.1 107c43.2 35.2 70.9 88.9 70.9 149s-27.7 113.8-70.9 149c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C475.3 341.3 496 301.1 496 256s-20.7-85.3-53.2-111.8c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zm-60.5 74.5C434.1 199.1 448 225.9 448 256s-13.9 56.9-35.4 74.5c-10.3 8.4-25.4 6.8-33.8-3.5s-6.8-25.4 3.5-33.8C393.1 284.4 400 271 400 256s-6.9-28.4-17.7-37.3c-10.3-8.4-11.8-23.5-3.5-33.8s23.5-11.8 33.8-3.5zM301.1 34.8C312.6 40 320 51.4 320 64V448c0 12.6-7.4 24-18.9 29.2s-25 3.1-34.4-5.3L131.8 352H64c-35.3 0-64-28.7-64-64V224c0-35.3 28.7-64 64-64h67.8L266.7 40.1c9.4-8.4 22.9-10.4 34.4-5.3z"></path></svg>');
+        }
+    </style>
 </head>
 <body>
-  <main>
-    <div>
-      <p>fefffffffff</p>
-    </div>
-  </main>
-</body>
-</html>
+    <div id="container" style="display: flex;">
+        <div class="video-container">
+            <div id="video_bar">
+                <input type="file" name="video_file" />
+                <input type="text" name="video_path" />
+                <button id="play_video">Play Video</button>
+                <button id="speechRecognition">subtitle</button>
+            </div>
+            <div id="video" style="width: 50%;">
+                <div id="subtitle-container"></div>
+            </div>
+            
+        </div>
+        <script type="module">
+            import { createVideo } from './web/video.mjs';
+            import { createSpeechRecognition } from './web/speech-web.mjs';
+            utils.bindEvents('#video_bar input[name="video_file"]', 'change', (e) => {
+                const videoInput = e.currentTarget;
+                if (videoInput.files.length > 0) {  
+                    const file = videoInput.files[0];  
+                    const videoURL = URL.createObjectURL(file);  
+                    document.querySelector('#video').append(createVideo(videoURL));
+                } else {  
+                    alert('Please select a video file first.');  
+                }  
+            });
 
+            utils.bindEvents('#video_bar #play_video', 'click', (e) => {
+                const file = document.querySelector('#video_bar input[name="video_path"]').value;
+                if (file) {
+                    document.querySelector('#video').append(createVideo(file));
+                }
+            });
+
+            document.querySelector('#speechRecognition').onclick = () => {
+                const recognition = createSpeechRecognition();
+                recognition.onresult = (event) => {
+                    const transcript = event.results[event.results.length-1][event.results[0].length-1].transcript;
+                    console.log('-------', transcript);
+                    if (transcript) {
+                        utils.$e('#subtitle-container').insert(transcript);
+                    }
+                };
+            };
+        </script>
+    </div>
+</body>
+
+</html>
