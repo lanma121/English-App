@@ -5,13 +5,13 @@ const repeatIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="#fff" width="1
 
 
 export const createVideo = (src) => {
-    const pause_time = 3000;
+    const pause_time = 2000;
     const status_init = 0;
     const status_ready = 1;
     const status_repeat = 2;
     const status_time = 3;
     const play_time = 3;
-    const duration_time = 5;
+    const duration_time = 10;
 
     const seek = {
         seeked: true,
@@ -78,6 +78,7 @@ export const createVideo = (src) => {
             currentTimes: 1,
             status: status_time,
         });
+        video.playbackRate = 0.5;
         start();
     }
 
@@ -165,6 +166,9 @@ export const createVideo = (src) => {
         if ( seek.status === status_time) {
             if (seek.currentTimes < play_time) {
                 seek.update({currentTimes: seek.currentTimes + 1});
+                if(seek.currentTimes === play_time) {
+                    video.playbackRate = 1; 
+                }
                 start();
                 stop();
             } else {
