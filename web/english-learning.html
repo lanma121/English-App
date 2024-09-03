@@ -8,6 +8,7 @@
     <title>English Learning</title>
     <link rel="manifest" href="manifest.json">
     <script src="./script.js"></script>
+    <script src="./web_bundle.js"></script>
     <script>
         let deferredPrompt;
 
@@ -344,12 +345,15 @@
                 <input type="file" name="video_file" />
                 <input type="text" name="video_path" />
                 <button id="play_video">Play Video</button>
+                <button id="speechRecognition">subtitle</button>
             </div>
             <div id="video" style="width: 50%;"></div>
         </div>
         <script type="module">
             import { createVideo } from './video.mjs';
             import { bindEvent } from './utils.mjs';
+            import { createSpeechRecognition } from './speech-web.mjs';
+
             bindEvent('#video_bar input[name="video_file"]', 'change', (e) => {
                 const videoInput = e.currentTarget;
                 if (videoInput.files.length > 0) {  
@@ -367,24 +371,24 @@
                     document.querySelector('#video').append(createVideo(file));
                 }
             });
+            
+
+            document.querySelector('#speechRecognition').onclick = () => {
+                console.log('-----start-----');
+                const recognition = createSpeechRecognition();
+                recognition.onresult = (event) => {
+                    const transcript = event.results[event.results.length-1][event.results[0].length-1].transcript;
+                    console.log('====-==-=', event, transcript);
+
+                    
+                    // const color = event.results;//[0][0].transcript;
+                    // diagnostic.textContent = `Result received: ${color}`;
+                    // bg.style.backgroundColor = color;
+                };
+            };
         </script>
 
     </div>
-    <button id="speechRecognition"> Click Me</button>
-    <script type="module">
-    import { createSpeechRecognition } from './speech-web.mjs';
-        console.log(window, '======');
-      document.querySelector('#speechRecognition').onclick = () => {
-        console.log('-----start-----');
-        const recognition = createSpeechRecognition();
-        recognition.onresult = (event) => {
-            console.log('====-==-=', event.results[event.results.length-1][event.results[0].length-1].transcript);
-            const color = event.results;//[0][0].transcript;
-            // diagnostic.textContent = `Result received: ${color}`;
-            // bg.style.backgroundColor = color;
-        };
-      };
-    </script>
 </body>
 
 </html>

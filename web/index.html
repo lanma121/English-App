@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>English Learning</title>
     <link rel="manifest" href="./manifest.json">
-    <script src="./web/web_bundle.js"></script>
+    <script src="./web_bundle.js"></script>
 
     <style>
         h4, p {
@@ -77,8 +77,8 @@
             
         </div>
         <script type="module">
-            import { createVideo } from './web/video.mjs';
-            import { createSpeechRecognition } from './web/speech-web.mjs';
+            import { createVideo } from './video.mjs';
+            import { createSpeechRecognition } from './speech-web.mjs';
             utils.bindEvents('#video_bar input[name="video_file"]', 'change', (e) => {
                 const videoInput = e.currentTarget;
                 if (videoInput.files.length > 0) {  

@@ -1,7 +1,7 @@
 {
     "name": "My English",
     "short_name": "English",
-    "start_url": "/english-learning.html",
+    "start_url": "/English-App/web/index.html",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#000000",
