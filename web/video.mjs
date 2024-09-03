@@ -38,7 +38,7 @@ export const createVideo = (src) => {
         controls: true,
         crossorigin: '',
         preload: 'auto', 
-        poster: 'https://media.tenor.com/qXzHf2tesO0AAAAC/loading-gif-steiness.gif'
+        poster: './images/R.gif'
     });
 
     const play = () => {

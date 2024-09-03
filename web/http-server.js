@@ -10,8 +10,8 @@ const port = 3005;
 const caches = {};
 const paths = {
   english: `${__dirname}/english-learning.html`,
-  index: `${__dirname}/google-translate.html`,
-  pages: pathp.resolve(`./index.html`),
+  google: `${__dirname}/google-translate.html`,
+  index: `${__dirname}/index.html`,
 }
 
 const getFileStat = async(path) => {
@@ -31,8 +31,9 @@ const getPath = (path = '') => {
 
 const parseUrl = (url = '') => {
   const [route, search = '' ] = url.slice(1).split('?');
-  url = url.replace(/^\/web/, '');
+  url = url.replace(/^\/web\//, '/');
   const path = fs.existsSync(url) ? url : (paths[route] || `${__dirname}${url}`);
+  
   return {
     url,
     route,
