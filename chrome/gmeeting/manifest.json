@@ -1,0 +1,42 @@
+{
+    "manifest_version": 3,
+    "name": "Google Meet AI",
+    "version": "1.0",
+    "description": "",
+    "permissions": ["clipboardWrite", "activeTab", "storage"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "images/favicon_io/favicon-16x16.png",
+        "48": "images/favicon_io/favicon-32x32.png",
+        "192": "images/favicon_io/android-chrome-192x192.png"
+      }
+    },
+    "icons": {
+      "16": "images/favicon_io/favicon-16x16.png",
+      "48": "images/favicon_io/favicon-32x32.png",
+      "192": "images/favicon_io/android-chrome-192x192.png"
+    },
+    "content_scripts": [
+      {
+        "js": [
+          "web_bundle.js",
+          "sider.js",
+          "content-script.js"
+        ],
+        "type": "module",
+        "matches": [
+          "https://meet.google.com/*",
+          "https://extension.app.scribbl.co/*"
+        ]
+      }
+    ],
+    "web_accessible_resources": [{
+      "matches": [ "https://meet.google.com/*", "https://extension.app.scribbl.co/*"],
+      "resources": ["sider.js"]
+    }]
+  }
+  

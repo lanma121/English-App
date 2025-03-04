@@ -1,0 +1,36 @@
+{
+    "manifest_version": 3,
+    "name": "English learning Scribbl",
+    "version": "1.0",
+    "description": "learning google meeting on Scribbl.",
+    "permissions": ["storage"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html",
+      "default_icon": {
+        "16": "images/favicon_io/favicon-16x16.png",
+        "48": "images/favicon_io/favicon-32x32.png",
+        "192": "images/favicon_io/android-chrome-192x192.png"
+      }
+    },
+    "icons": {
+      "16": "images/favicon_io/favicon-16x16.png",
+      "48": "images/favicon_io/favicon-32x32.png",
+       "192": "images/favicon_io/android-chrome-192x192.png"
+    },
+    "content_scripts": [
+      {
+        "js": [
+          "web_bundle.js",
+          "content-script.js"
+        ],
+        "type": "module",
+        "matches": [
+          "https://extension.app.scribbl.co/*"
+        ]
+      }
+    ]
+  }
+  
